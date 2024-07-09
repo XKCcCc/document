@@ -1,0 +1,196 @@
+----------------
+------ QT ------
+----------------
+
+一、QT简述
+    1.QT简介：跨平台图形界面引擎
+    优点：跨平台、接口简单，容易上手，一定程度上简化了内存回收
+    2.安装QT
+二、创建QT项目
+    1.创建项目时的基类：
+        QWidget：简单窗口
+        QMainWindow:带工具栏和状态栏窗口，继承于QWidget；
+        QDialog：带对话框窗口，继承于QWidget；
+    2.包含应用程序类的头文件：#include <QApplication>
+    3.main程序入口
+        int main(int argc, char *argv[])//argc命令行变量的数量，argv命令行变量的数组
+        {
+            QApplication a(argc, argv);//应用程序对象，在QT中有且仅有一个应用程序对象
+            myWidget w;//窗口对象，父类为QWidget
+            w.show();
+            return a.exec();//让应用程序对象进入消息循环
+        }
+    4..pro文件
+        QT += core gui//QT包含的模块
+        greaterThan(QT_MAJOR_VERSION, 4):QT += widgets //大于4版本以上，包含widget模块
+        TARGET = 名称//目标，生成exe文件名称
+        TEMPLATE = app//模板，应用程序模板Application
+        SOURCES += main.cpp\ //源文件
+                mywidget.cpp
+        HEADERS += mywidget.h //头文件
+三、第一个QT程序
+    （一）QPushButton按钮类
+        1.头文件：#include <QPushButton>
+        2.创建按钮：QPushButton * btn = new QPushButton;
+        3.设置父亲：btn->setParent(this);
+        4.设置文本：btn->setText("第一个按钮");
+            QPushButton * btn2 = new QPushButton("第二个按钮"， this);
+        5.重置窗口大小：resize(600, 400);
+        6.移动按钮：btn2->move(100, 100);
+        7.设置窗口标题：setWindowTitle("第一个窗口");
+        8.设置窗口固定大小：setFixedSize(600,400);
+        9.打印qDebug() << "hello world!";
+    （二）对象模型（对象树）    
+        1.当创建的对象在堆区时，如果指定的父亲是QOject派生类，则可以不用手动释放；
+    （三）QT窗口坐标体系
+        1.左上角为(0, 0)，x以右为正方向，y以下为正方向
+四、信号和槽机制(松散耦合)
+    （一）系统自带的信号和槽
+        1.点击按钮关闭窗口
+            connect(信号发送者, 发送具体信号（函数的地址）, 信号接收者, 信号处理（槽函数）);
+            connect(myBtn, &QPushButton::clicked, this, &QWidget::close);//点击按钮关闭窗口
+    （二）自定义信号和槽
+        1.自定义信号
+            1.1自定义信号写到signals下，返回值是void，只需声明不需要实现，可以有参数，可以重载
+            1.2出发自定义信号：emit 自定义信号；
+            1.3重载版本的连接：
+                void(Teacher::*teacherSignal)(QString) = &Teacher::hungry;
+                void(Student::*studentSlot)(QString) = &Student::treat;
+            1.4string转换为char* 变量.ToUtf8().Data();
+        2.自定义槽
+            自定义槽写到public slots下，返回值是void，需要声明和实现，可以有参数，可以重载
+        3.拓展
+            3.1信号连接槽、信号连接信号：connect();
+            3.2断开信号：disconnect();
+            3.3一个信号可以连接多个槽
+            3.4多个信号可以连接一个槽
+            3.5信号和槽的参数必须类型一一对应
+            3.6信号的参数类型可以多于槽的参数类型
+            3.7lambda表达式：
+                [=/&](){}();
+                []为标识符，表示匿名函数
+                =值传递
+                &引用传递
+                ()参数
+                {}实现体
+                multable修饰值传递变量，可以修改拷贝出的数据，改变不了本体
+                最常用[=](){}
+                返回值[]()->int{}
+                int ret = []()->int{return 1000;}();
+                connect(btn, &QPushButton::clicked, this, [](){ this->close();})
+    （三）信号槽的扩展
+    （四）QT4版本的信号槽写法
+五、QMainWindow
+    （一）菜单栏（#include <QMenuBar>）
+        菜单栏只能有一个；
+        1.菜单栏创建：QMenuBar* bar = menuBar();
+        2.菜单栏放到窗口：setMenuBar(bar);
+        3.创建菜单：Qmenu * fileMenu = bar->addMenu("菜单");
+        4.创建菜单项：QAction* newAction = fileMenu->addAction("新建");
+        5.添加分割线：fileMenu->addSeoarator();
+    （二）工具栏（#include <QToolBar>）
+        工具栏可以有多个；
+        1.创建工具栏：QToolBar* toolBar = new QToolBar(this);
+        2.设置左右停靠：toolBar->setAllowAreas(Qt::LeftToolBarArea | Qt::RightToolBarArea);
+        3.设置浮动：toolBar->setFloatable(false);
+        4.设置移动：toolBar->setMovable(false);
+        5.添加内容：toolBar->addAction(newAction);
+        6.添加分割线：toolBar->addSeparator();
+        7.添加控件：QPushButton * btn = new QPushButton("按钮1", this);
+                   toolBar->addWidget(btn);
+    （三）状态栏（#include <QStatusBar>）
+        状态栏只能有一个；
+        1.创建状态栏：QStatusBar * stBar = new QStatusBar();
+        2.设置到窗口中：setStatusBar(stBar);
+        3.添加标签控件：QLabel * label = new QLabel("提示信息", this);
+                       stBar->addWidget(label);
+                       QLabel * label2 = new QLable("右侧信息", this);
+                       stBar->setPermanentWidget(label2);
+    （四）铆接部件（#include <QDockWidget>）
+        铆接部件可以有多个；
+        1.创建铆接部件：QDockWidget * dockWidget = new QDockWidget("浮动", this);
+        2.设置到窗口中：addDockWidget(QT::BottomDockWidgetArea, dockWidget);
+        3.设置停靠区域:dockWidget->setAllowAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea)
+    （五）中心部件（#include <QTextEdit>）
+        中心部件只能有一个；
+        1.创建中心部件：QTextEdit * edit = new QTextEdit(this);
+        2.设置到窗口中：setCentralWidget(edit);
+    （六）资源文件
+        1.将图片文件拷贝到项目目录下
+        2.右键项目->添加新文件->Qt->Qt resource file->给资源文件起名
+        3.res生成res.qrc
+        4.open in editor 编辑资源
+        5.添加前缀
+        6.添加文件
+        7.使用"：+前缀名+文件名"
+六、对话框QDialog（#include <QDialog>）
+    （一）基本概念
+        1.分类：模态对话框（不可以对其他窗口进行操作）、非模块对话框（可以对其他窗口进行操作）
+        2.模态对话框：
+            创建：QDialog dlg(this);
+            重置大小：dlg.resie(200, 100);
+            阻塞显示：dlg.exec();
+        3.非模块对话框：  
+            创建：QDialog *dlg2 = new Dialog(this);
+            显示：dlg2->show();
+            关闭时释放对话框对象：dlg2->setAttribute(Qt::WA_DeleteOnClose);
+    （二）标准对话框（#include <QMessageBox>）
+        1.消息对话框
+            1.1错误对话框：QMessageBox::critical(this, "critical", "错误");
+            1.2消息对话框：QMessageBox::information(this, "info", "信息");
+            1.3提问对话框(返回类型StandardButton)： QMessageBox::question(this, "ques", "提问"， QMessageBox::Save | QMessageBox::Cancel, QMessageBox::Cancel); 
+            1.4警告对话框：QMessageBox::warning(this, "warning", "警告");
+        2.其他标准对话框
+            颜色对话框（#include<QColorDialog>）：QColor color = QColorDialog::getColor(QColor(255, 0, 0));
+                                                qDebug() << "r:" << color.red() << "g:" << color.green() << "b:" << color.black();
+            文件对话框（#include<QFileDialog>）：QString str = QFileDialog::getOpenFileName(this, "打开文件", "C:\\", "(*.txt)");
+                                                qDebug() >> str;
+            字体对话框（#include<QFontDialog>）：bool flag;
+                                                QFont font = QFontDialog::getFont(&flag, QFont("华文彩云“， 36));
+                                                qDebug() << "字体：" << font.family();
+    （三）自定义消息框
+    （四）消息对话框
+    （五）标准文件对话框
+七、事件
+    （一）鼠标事件
+        鼠标进入事件：void enterEvent(QEvent * event);
+        鼠标离开事件：void leaveEvent(QEvent * event);
+        鼠标按下：void mousePressEvent(QMouseEvent * ev);
+        鼠标释放：void mouseReleaseEvent(QMouseEvent * ev);
+        鼠标移动：void mouseMoveEvent(QMouseEvent * ev);
+    （二）定时器
+        定时器1：void timmerEvent(QTimerEvent * ev);
+        启动：startTimer(1000);
+        定时器2：QTimer * timer = new QTimer;
+        启动：timer->start(500);
+    （三）事件分发器
+        事件分发器：bool event(QEvent * ev);
+    （四）事件过滤器
+        安装事件过滤器ui->label->installEventFilter(this);
+        重写事件过滤器的事件bool eventFilter(QObject * obj, QEvent * e);
+八、绘图
+    （一）QPainter绘图
+        绘图事件：void paintEvent(QPaintEvent *);
+        画家类：#include <QPainter>
+        实例化画家：Qpainter painter(this);
+        创建画笔：QPen pen(QColor(255, 0, 0));
+        使用画笔：painter.setPen(pen);
+        画线：painter.drawLine(QPoint(0, 0), QPoint(100, 100));
+        画圆：painter.drawEllipse(QPoint(100, 100), 100, 50);
+        画矩形：painter.drawRect(QPoint(20, 20), 50, 50);
+        画文字：painter.drawText(QRect(100, 200, 150, 50), "如愿");
+        手动调用画图事件：update();
+        绘图设备：QPixmap、QImage、QPicture、QBitmap
+        画图保存：img.save("C:\\");
+九、文件系统
+    （一）基本文件操作
+        QString path = QFileDialog::getOpenFileName(this, "C:\\");
+        QFile file(path);
+        file.open(QIODevice::ReadOnly);
+        //file.open(QIODevice::Append);
+        //file.write("123");
+        QbyteArray array = file.readAll();
+        ui->textEdit->setText(array);
+        file.close();
+    （二）二进制文件读写
+    （三）文本文件读写

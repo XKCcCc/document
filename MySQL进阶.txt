@@ -1,0 +1,326 @@
+---------------
+---MySQL进阶---
+---------------
+
+一、存储引擎
+    （一）MySQL体系结构
+        连接层、服务层、引擎层、存储层
+        逻辑存储结构：表空间、段、区、页、行
+    （二）存储引擎简介
+        存储引擎就是存储数据、建立索引、更新/查询数据等技术的实现方式。存储引擎是基于表的，而不是基于库的，所以存储引擎也被称为表类型。
+        默认存储引擎InnoDB；
+        1.查看数据库支持的存储引擎 show engines;
+        2.创建表，并指定存储引擎
+            create table my_memory
+            (
+                id int not null primary key auto_increment,
+                name varchar(10) not null,
+            )engine = MEMORY;
+    (三)存储引擎的特点
+        InnoDB：支持事务、外键、行级锁；
+        MyISAM：支持表锁，不支持事务、外键、行锁，访问速度快；
+        Memory：内存存放、支持Hash索引；
+
+二、索引
+    索引是帮助MySQL高效获取数据的数据结构。 
+    优点：提高数据的检索效率；通过索引列对数据进行排序，降低数据排序的成本，降低CPU的消耗；
+    缺点：索引列也是要占用空间的；索引大大提高了查询效率，同时降低了更新表的速度，如对表进行增删改效率降低；
+    索引结构的分类：B+tree索引、Hash索引、R-tree索引、Full-text索引
+    为什么InnoDB存储引擎选择使用B+tree索引结构
+        相对于二叉树，层级更少，搜索效率高；
+        对于B-tree，无论是叶子节点还是非叶子节点，都会保存数据，这样导致一页中的存储的键值减少，指针跟着减少，要同样保存大量数据，只能增加树的高度，导致性能降低；
+        相对于Hash索引，B+tree支持范围匹配及排序操作；
+    （一）索引分类
+        主键索引：针对于表中主键创建的索引，默认自动创建，只能有一个，PRIMARY
+        唯一索引：避免同一个表中某数据列中的值重复，可以有多个，UNIQUE
+        常规索引：快速定位特定数据，可以有多个
+        全文索引：全文索引查找的是文中的关键词，而不是比较索引，可以有多个，FULLTEXT
+        InnoDB根据索引的存储形式，可以分为
+            聚集索引：将数据存储与索引放到了一块，索引结构的叶子节点保存了行数据，必须有且只有一个
+            二级索引：将数据与索引分开存储，索引结构的叶子节点关联的是对应的主键，可以存在多个
+    （二）索引语法
+        创建索引 create [unique|fulltext] index index_name on 表名（index_col_name）;
+        查看索引 show index from 表名;
+        删除索引 drop index index_name on 表名;
+    （三）SQL性能分析
+        查询当前数据库增删改查语句频次 show global status like "Com_______";
+        1.慢查询日志
+            查询状态 show variables like "slow_query_log";
+            修改MySQL配置文件 /etc/my.cnf
+            开启慢查询日志 slow_query_log = 1
+            设置慢查询时间 long_query_time = 2
+            查询慢查询日志 /var/lib/mysql/localhost-slow.log
+        2.profile详情
+            查看是否支持 profile select @@have_profiling;
+            查看profile状态 select @@profiling;
+            开启profile set profiling = 1;
+            查看SQL耗时情况 show profiles;
+            查看SQL各阶段耗时情况 show profile for query id;
+        3.explain执行计划
+            获取MySQL执行SQL的信息 explain select * from 表名 where id = 1;
+            explain执行计划各字段含义
+                id：select查询的序列号，表示查询中执行select子句或是操作表的顺序，id相同执行顺序从上到下，id不同，值越大越先执行；
+                select_type：表示select的类型，常见的取值有simple（简单表）、primary（主查询）、union（union中的第二个或者后面的查询语句）、subquery（select/where之后包含了子查询）等；
+                type：表示连接类型，性能由好到差的连接类型为NULL、system、const、eq_ref、ref、range、index、all；
+                possible_key：显示可能应用在这张表上的索引，一个或多个；
+                key：实际使用的索引；
+                key_len：索引中使用的字节数；
+                rows:MySQL认为必须要执行查询的行数
+                filtered：表示返回结果的行数占需读取行数的百分比；
+    （四）索引使用
+        1.验证索引效率
+            1.1未建立索引前执行SQL语句查看SQL的耗时；
+            1.2针对字段创建索引；
+            1.3再次执行相同的SQL语句，再次查看SQL的耗时；
+        2.索引的使用法则
+            2.1最左前缀法则：如果使用联合索引，要遵守最左前缀法则。最左前缀法则指的是查询从索引的最左列开始，并且不跳过索引中的列，如果跳过某一列，索引将部分失效；
+            2.2范围查询：如果使用联合索引，出现范围查询（>,<），范围查询右侧的列索引失效；
+            2.3索引列运算：不要在索引列上进行运算操作，否则索引将失效；
+            2.4字符串不加引号：字符串类型字段使用时，不加引号，索引将失效；
+            2.5模糊查询：如果仅是尾部模糊匹配，索引不会失效，如果是头部模糊匹配，索引失效；
+            2.6or连接的条件：用or分开的条件，如果or前的条件中的列有索引，而后面的列中没有索引，那么涉及的索引都不会被用到；
+            2.7数据分布影响：如果MySQL评估使用索引比全表更慢，则不使用索引；
+            2.8SQL提示：SQL提示是优化数据库的一个重要手段，简单来说，就是在SQL语句中加入一些人为的提示来达到优化操作的目的；
+                在SQL语句中加入use index()、ignore index()、force index();
+            2.9覆盖索引：尽量使用覆盖索引（查询使用了索引，并且需要返回的列，在该索引中已经全部能够找到），减少select *；
+            2.10前缀索引：当字段类型为字符串（varchar、char等）时，有时候需要所有很长的字符串，这会让索引变得很大，查询时浪费大量的磁盘IO，影响查询效率，此时可以只将字符串的一部分前缀建立索引，这样可以大大节约索引空间，从而提高索引效率；
+            2.11单列索引与联合索引：建议使用联合索引；
+    （五）索引设计原则
+        1.针对于数据量较大，且查询比较频繁的表建立索引。
+        2.针对于常作为查询条件（where）、排序（order）、分组（group by）操作的字段建立索引；
+        3.精良选择区分度高的列作为索引，尽量建立唯一索引，区分度高，使用索引的效率越高；
+        4.如果是字符串类型的字段，字段的长度较长，可以针对于字段的特点，建立前缀索引；
+        5.尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率；
+        6.要控制索引的数量，索引并不是多多益善，索引越多，维护索引结构的代价也就越大，会影响增删改的效率；
+        7.如果索引列不能存储NULL值，请在创建表时使用NOT NULL约束它，当优化器知道每列是否包含NULL值时，它可以更好地确定哪个索引最有效地用于查询；
+
+三、SQL优化
+    （一）插入数据
+        批量插入
+        手动提交事务
+        主键顺序插入
+        大批量插入数据使用load指令进行插入
+            客户端连接服务端时，加上参数 --local-infile  mysql --local-infile -u root -p root
+            设置全局参数local_infile为1，开启从本地加载文件导入数据的开关 select @@local_infile; set golbal local_infile = 1;
+            执行load指令将准备好的数据，加载到表结构中 load data local infile "/root/sql1.log" into table `tb_user` fields teminated by "," ,lines terminated by "/n"; 
+            主键顺序插入性能高于乱序插入
+    （二）主键优化
+        满足业务需求的情况下，尽量降低主键的长度；
+        插入数据时，尽量选择顺序插入，选择使用auto_increment自增主键；
+        尽量不要使用UUID做主键或者是其他自然主键，如身份证号；
+        业务操作是，避免对主键的修改；
+    （三）order by优化
+        根据排序字段建立合适的索引，多字段排序是，也遵循最左前缀法则；
+        尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率；多字段排序，一个升序一个降序，此时需要注意联合索引在创建时的规则；
+        如果不可避免的出现filesort，大数据量排序时，可以适当增大排序缓冲区的大小sort_butter_size;
+    （四）group by优化
+        在分组操作时，可以通过索引来提高效率；
+        分组操作时，索引的使用也是满足最左前缀法则；
+    （五）limit优化
+        一般分页查询时，通过创建覆盖索引能够比较好的提高性能，可以通过覆盖所有加子查询形式进行优化；
+    （六）count优化
+        按照效率排序的话，count(字段)<count(主键id)<count(1)=count(*);
+    （七）update优化
+        InnoDB行锁时针对索引加的锁，部署针对记录加的锁，并且该索引不能失效，否则会从行锁升级为表锁；
+四、视图/存储过程/触发器
+    （一）视图
+        1.创建视图 create [or replace] view 视图名称 as select语句；
+        2.查询创建视图语句 show create view 视图名称
+        3.查询视图数据 select * from 视图名称；
+        4.修改视图 create or replace view 视图名称 as select 语句；
+                alter view 视图名称 as select语句；
+        5.删除视图 drop view if exists 视图名称；
+        6.视图的检查选项 with cascaded check option 
+                      with local check option
+        7.视图的更新
+            视图中的行与基础表中的行之间必须存在一对一的关系，若视图创建包含聚合函数、distinct、group by、having、union则不能更新；
+        8.视图的作用
+            简单、安全、数据独立
+    （二）存储过程
+        存储过程就是数据库SQL语言层的代码封装与重用
+        1.存储过程
+            创建 create procedure 存储过程名称([参数列表])
+                 begin
+                    --SQL语句
+                 end；
+            调用 存储过程名称([参数]);
+            查看
+                查询指定数据库的存储过程及状态信息 select * from information_schema.routines where routine_schema = "数据库";
+                查询某个存储过程的定义 show create procedure 存储过程名;
+            删除 drop procedure 存储过程名;
+        2.系统变量
+            查看 show [session|global] variables；
+            设置 set [session|global] 系统变量名；
+        3.用户定义变量
+            赋值 set @var_name = expr;
+                 select count(*) into @var_name from 表名;
+            使用 select @var_name;
+        4.局部变量 可用作存储过程内的局部变量；
+            声明 declare 变量名 变量类型 [default];
+            赋值 set 变量名 = 值;
+                 select 字段名 into 变量名 from 表名;
+        5.if
+            if 条件1 then
+                ...
+            elseif 条件2 then
+                ...
+            else
+                ...
+            end if;
+        6.参数in、out、inout
+            用法 create procedure 存储过程名([in/out/inout 参数名 参数类型])
+                 begin
+                    --SQL语句
+                 end;
+        7.case
+            用法 case
+                 when 条件 then 执行内容
+                 when 条件 then 执行内容
+                 else 执行内容
+                 end case；
+        8.while
+            while 条件 do
+                SQL语句
+            end while；
+        9.repeat
+            repeat
+                SQL语句
+                until 条件1
+            end repeat；
+        10.loop
+            [label]:loop
+                SQL语句
+                leave label;
+
+            end loop [label];
+        11.游标
+            declare 游标名称 cursor for 查询语句; 声明游标
+            open 游标名称; 打开游标
+            fetch 游标名称 into 变量; 获取游标记录
+            close 游标名称; 关闭游标
+        12.存储函数
+            create function 存储函数名称([参数列表])
+            returns type [caracteristic]
+            begin
+                SQL语句
+                return ...;
+            end
+    （三）触发器
+        1.创建
+            create trigger trigger_name
+            before/after insert/update/delete
+            on tb_name for each row -行级触发器
+            begin
+                trigger_stmt;
+            end;
+        2.查看
+            show triggers;
+        3.删除
+            drop trigger [schema_name.]trigger_name;
+五、锁
+    （一）全局锁
+        flush tables with read lock；数据库加锁
+        mysqldump -u root -p 123456 itcast > itcast.sql;数据库备份
+        unlock tables；数据库解锁
+    （二）表级锁
+        1.表锁
+            分类：表共享读锁、表独占写锁
+            加锁 lock tables 表名 read/write;
+            释放锁 unlock tables/客户端断开连接;
+        2.元数据锁
+        3.意向锁
+            分类：意向共享锁、意向排他锁；
+    （三）行级锁
+        分类：行锁、间隙锁、临键锁
+        行锁
+            InnoDB实现了以下两种类型的行锁：
+                共享锁：允许一个事务去读一行，阻止其他事务获得相同数据集的排他锁；
+                排他锁：允许获取排他锁的事务更新数据，阻止其他事务获得相同数据集的共享锁和排他锁；
+            默认情况下，InnoDB在repeatable read事务隔离级别允许运行，InnoDB使用next-key锁进行搜索和索引扫描，以防止幻读；
+                针对唯一索引进行检索时，对已存在的记录进行等值匹配时，将会自动优化为行锁；
+                InnoDB的行锁是针对于索引加的锁，不通过索引条件检索数据，那么InnoDB将对表中的所有记录加锁，此时就会升级为表锁；
+        间隙锁/临键锁：
+            默认情况下，InnoDB在repeatable read事务隔离级别允许运行，InnoDB使用next-key锁进行搜索和索引扫描，以防止幻读；
+                索引上的等值查询（唯一索引），给不存在的记录加锁时，优化为间隙锁；
+                索引上的等值查询（普通索引），向右遍历时最后一个值不满足查询需求时，next-key lock退化为间隙锁；
+                索引上的等值查询（唯一索引），会访问到不满足条件的第一个值为止；
+            间隙锁唯一目的是防止其他事务插入间隙，间隙锁可以共存，一个事务采用的间隙锁不会阻止另一个事务在同一间隙上采用间隙锁；
+六、InnoDB引擎
+    （一）逻辑存储结构：表空间、段、区、页、行
+        表空间（ibd文件）：一个mysql实例可以对应多个表空间，用于存储记录，索引等数据；
+        段：分为数据段、索引段、回滚段，InnoDB是索引组织表，数据段就是B+树的叶子节点，索引段即为B+树的非叶子节点。段用来管理多个区；
+        区：表空间的单元结构，每个区的大小为1M，默认情况下，InnoDB存储引擎页大小为16K，即一个区中一个有64个连续的页；
+        页：是InnoDB存储引擎磁盘管理的最小单元，每个页的大小默认为16KB，为了保证页的连续性，InnoDB存储引擎每次从磁盘申请4-5个区；
+        行：InnoDB存储引擎数据是按行进行存放的；
+    （二）架构
+        MySQL5.5版本开始，默认使用InnoDB存储引擎，它擅长事务处理，具有崩溃恢复特性，在日常开发中使用非常广泛；
+        内存架构：
+            Buffer Pool：缓冲池是主内存中的一个区域，里面可以缓存磁盘上经常操作的真实数据，在执行增删改查操作时，先操作缓存池中的数据，然后再以一段频率刷新到磁盘，从而减少磁盘IO，加快处理速度；
+                缓冲池以Page页为单位：底层采用链表数据结构管理Page，根据状态将Page分为三种类型：
+                    free page：空闲page，数据没有被修改过；
+                    clean page：被使用page，数据没有被修改过；
+                    dirty page：脏页，被使用page，数据被修改过，页中数据与磁盘数据产生了不一致；
+            Change Buffer：更改缓冲区，在执行DML语句时，如果这些数据Page没有在Buffer Pool中，不会直接操作磁盘，而会将数据变更存在更改缓冲区Change Buffer中，在未来数据被读取时，再将数据合并恢复到Buffer Pool中，再将合并后的数据刷新到磁盘中。
+            Adaptive Hash Index：自适应hash索引，用于优化对Buffer Pool数据的查询。InnoDB存储引擎会监控对表上各索引页的查询，如果观察到hash索引可以提升速度，则建立hash索引，称之为自适应hash索引；
+            Log Buffer：日志缓冲区，用来保存要写入到磁盘中的log日志数据，默认大小为16MB，日志缓冲区的日志会定期刷新到磁盘中。如果需要更新、插入或删除许多行的事务，增加日志缓冲区的大小可以节省磁盘IO；
+        磁盘架构：
+            System Tablespace：系统表空间时更改缓冲区的存储区域，如果表是在系统表空间而不是每个表文件或通用表空间中创建的，它也可能包含表和索引数据。
+            File-Per-Table Tablespaces：每个表的文件表空间包含单个InnoDB表的数据和索引，并存储在文件系统上的单个数据文件中。
+            General Tablespaces：通用表空间，需要通过create tablespace语法创建通用表空间，在创建表时，可以指定该空间；
+            Undo Yablespaces：测序表空间，MySQL实例在初始化时会自动创建两个默认的undo表空间，用于存储undo log日志；
+            Temporary Tablespaces：InnoDb使用会话临时表空间和全局临时表空间，存储用户创建的临时表等数据；
+            Doublewrite Buffer Files：双写缓冲区，InnoDB引擎将数据页从Buffer Pool中刷新到磁盘前，先将数据页写入双写缓冲区文件中，便于系统异常时恢复数据；
+            Redo Log：重做日志，是用来实现事务的持久性，该日志文件由两部分组成：重做日志缓冲区和重做日志文件，前者是在内存中，后者是在磁盘中。当事务提交后会把所有修改信息都会存到该日志中，用于在刷新脏页到磁盘时，发生错误时，进行数据恢复使用；
+        后台线程：
+            Master Thread：核心后台线程，负责调度其他线程，还负责将缓冲池中的数据异步刷新到磁盘中，保持数据的一致性，还包括脏页的刷新、合并插入缓存、undo页的回收；
+            IO Thread：在InnoDB存储引擎中大量使用了AIO来处理IO请求，这样可以极大地提高数据库的性能，而IO Thread主要负责这些IO请求的回调；
+            Purge Thread：主要用于回收事务已经提交了的undo log，在事务提交之后，undo log可能不用了，就用它来回收；
+            Page Cleaner Thread:协助Master Thread刷新脏页到磁盘的线程，它可以减轻Master Thread的工作压力，减少阻塞；
+    （三）事务原理
+        redo log：重做日志，记录的时事务提交的时候数据页的物理修改，是用来实现事务的持久性；
+            该日志文件由两部分组成：重做日志缓冲以及重做日志文件，前者是在内存中，后者在磁盘中。当事务提交之后会把所有修改信息都存到该日志文件中，用于刷新脏页到磁盘，发生错误时，进行数据恢复使用；
+        undo log：回滚日志，用于记录数据被修改之前的信息，作用包含两个：提供回滚和MVCC;
+            undo log和redo log记录物理日志不一样，它是逻辑日志。可以任务当delete一套记录时，undo log中会记录一条对应的insert记录，反之亦然，当update一条记录时，它记录一条对应相反的update记录，当执行rollback时，就可以从undo log中的逻辑记录读取到相应的内容并进行回滚；
+            Undo log销毁：undo log在事务执行时产生，事务提交时，并不会立即删undo log，因为这些日志可能还用于MVCC；
+            Undo log存储：undo log采用段的方式进行管理和记录，存放在签名接收的rollback segment回滚段中，内部包含1024个undo log segment；
+    （四）MVCC
+        当前读：读取的是记录的最新版本，读取时还要保证其他并发事务不能修改当前记录，会对读取的记录进行加锁。对应我们日常操作如select ... lock in share mode,select ... for update、insert、delete都是一种当前读；
+        快照读：简单的select就是快照读，快照读读取的是记录数据的可见版本，有可能是历史数据，不加锁，是非阻塞读；
+            Read Committed：每次select，都生成一个快照读；
+            Repeatable Read：开启事务后第一个select语句才是快照读的地方；
+            Serializable：快照读会退化为当前读；
+        MVCC：多版本并发控制，指维护一个数据的多个版本，使得读写操作没有冲突，快照读为MySQL实现MVCC提供了一个非阻塞读功能，MVCC的具体实现，还需要依赖于数据库记录中的三个隐式字段、undo log日志、readView；
+        记录中的隐藏字段
+            DB_TRX_ID:最近修改事务ID，记录插入这条记录或最后一次修改该记录的事务ID；
+            DB_ROLL_PTR:回滚指针，指向这条记录的上一个版本，用于配合undo log，指向上一个版本；
+            DB_ROW_ID:隐藏主键，如果表结构没有指定主键，将会生成该隐藏字段；
+        undo log
+            回滚日志，在insert、update、delete的时候产生的便于数据回滚的日志；
+            当insert的时候，产生的undo log日志只在回滚是需要，在提交事务后，可被立即删除；
+            而update、delete的时候，产生的undo log日志不仅在回滚时需要，在快照读时也需要，不会立即删除；
+        undo log版本链
+            不同事务或相同事务对同一条记录进行修改，会导致该记录的undo log生成一条记录版本链表，链表的头部是最新的旧记录，链表尾部是最早的旧记录；
+        readView
+            ReadView是快照读SQL执行是MVCC提取数据的依据，记录并维护系统当前活跃的事务id；
+                不同的隔离级别，生成ReadView的时机不同：
+                    READ COMMITTED:在事务中每一次执行快照读时生成ReadView；
+                    REPEATABLE READ:仅在事务中第一次执行快照读时生成ReadView，后续复用该ReadView；
+七、MySQL管理
+    系统数据库
+        mysql：存储MySQL服务器正常运行所需要的各种信息；
+        information_schema:提供了访问数据库元数据的各种表和视图，包含数据库、表、字段类型及访问权限等；
+        performance_schema:为MySQL服务器运行时状态提供了一个底层监控功能，主要用于收集数据库服务器性能参数；
+        sys:包含了一系列方便DBA和开发人员利用performance_schema性能数据库进行性能调优和诊断的视图；
+    常用工具
+        mysql [option] [database]
+            -u #指定用户名
+            -p #指定密码
+            -h #指定服务器IP或域名
+            -P #指定连接端口
+            -e #执行SQL语句并退出
+        mysqladmin：是一个执行管理操作的客户端程序，可以用它来检测服务器的配置和当前状态，创建并删除数据库等；
+        mysqlbinlog：由于服务器生成的二进制日志文件以二进制格式保存，所以如果想要检查这些文本的文本格式，就会使用到mysqlbinlog日志管理工具；
+        mysqlshow：客户端对象查找工具，用来很快地查找存在哪些数据库、数据库中的表、表中的列或者索引；
+        mysqldump：用来备份数据库或在不同数据库之间进行数据迁移，备份内容包含创建表，及插入表的SQL语句；
+        mysqlimport：客户端数据导入工具，用来导入mysqldump加-T参数后导出的文本文件；
+        source：如果需要导入sql文件，可以使用mysql中的source指令；

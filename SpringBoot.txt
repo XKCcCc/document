@@ -1,0 +1,234 @@
+--------------------
+---- SpringBoot ----
+--------------------
+（一）快速上手SpringBoot
+    SpringBoot入门程序：
+        1.创建新模块，选择Spring Initializr，并配置模块相关基础信息；
+        2.选择当前模块需要使用的技术集；
+        3.开发控制器类；
+    最简单SpringBoot程序所包含的基础文件：
+        pom.xml
+        Application类
+    创建SpringBoot工程的四种方式
+        基于Idea创建SpringBoot工程；
+        基于官网创建SpringBoot工程；
+        基于阿里云创建SpringBoot工程；
+        手工创建Maven工程修改为SpringBoot；
+    Spring简介
+        SpringBoot是由Pivotal团队提供的全新框架，其设计目的是用来简化Spring应用的初始搭建以及开发过程；
+        Spring程序缺点：
+            依赖设置繁琐；
+            配置繁琐；
+        SpringBoot程序优点：
+            起步依赖（简化依赖配置）；
+            自动配置（简化常用工程相关配置）；
+            负责功能（内置服务器）；
+    
+    小结
+        1.内嵌Tomcat服务器是SpringBoot负责功能之一；
+        2.内嵌Tomcat工作原理是将Tomcat服务器作为对象运行，并将对象创建权交给Spring容器管理；
+        3.变更内嵌服务器思想是去除现有服务器，添加全新的服务器；
+（二）REST风格
+    REST简介
+        REST（Representational State Transfer），表现形式状态转换；
+        传统风格资源描述形式：
+            http://localhost/user/getById?id=1
+            http://localhost/user/saveUser
+        REST风格描述形式：
+            http://localhost/user/1
+            http://localhost/use
+        优点：
+            隐藏资源的访问行为，无法通过地址得知对资源是何种操作；
+            书写简化；
+        REST风格简介
+            按照REST风格访问资源是使用行为动作区分对资源进行了何种操作；
+                http://localhost/users 查询全部用户信息 GET（查询）
+                http://localhost/users/1 查询全部用户信息 GET（查询）
+                http://localhost/users 查询全部用户信息 POST（新增/保存）
+                http://localhost/users 查询全部用户信息 PUT（修改/更新）
+                http://localhost/users/1 查询全部用户信息 DELETE（删除）
+            根据RSET风格对资源进行访问称为RESTful；
+            @RequestBody、@RequestParm、@PathVariable
+                区别：
+                    @RequestParm用于接收url地址传参或表格传参；
+                    @RequestBody用于接收json数据；
+                    @PathVariable用于接收路径参数，使用{参数名称}描述路径数据；
+                应用：
+                    后期开发中，发送请求参数超过1个时，@RequestBody应用较广；
+                    如果发送非json格式数据，选用@RequestBody接收请求参数；
+                    采用RESTful进行开发，当参数数量较少时，例如1个，可以采用@PathVariable接收请求路径变量，通常用于传递id值；
+    RESTful入门案例
+    REST快速开发
+（三）SpringBoot基础配置
+    属性配置
+    配置文件分类
+        properties、yml、yaml；
+    yaml文件
+    yaml数据读取
+        定义的变量上使用@Value(${name})读取数据;
+        配置文件中用${属性名}引用数据；
+        使用@ConfigurationProperties注解绑定配置信息到封装类中；
+        封装类需要定义为Spring管理的Bean，否则无法进行属性注入；
+（四）基于SpingBoot实现SSM整合
+    整合Junit
+        导入测试对应的starter；
+        测试类使用@SpringBootTest修饰；
+        使用自动装配形式添加要测试的对象；
+    整合MyBatis
+        勾选MyBatis技术，也就是导入MyBatis对应的starter；
+        数据库连接相关信息转换成配置；
+        数据库SQL映射需要添加@Mapper被容器识别；
+    整合MyBatis-Plus
+        手工添加MyBatis-Plus对应的starter；
+        数据层接口使用BaseMapper简化开发；
+        需要使用的第三方技术无法通过勾选确定时，需要手工添加坐标；
+    整合Druid
+        导入Druid对应的starter；
+        变更Druid的配置方式；
+    整合人员第三方技术
+        导入测试对应的starter；
+（五）基于SpingBoot实现SSMP整合案例
+    lombok
+        一个基于Java的类库，提供一套注解(@Data),用于简化POJO的开发；
+    数据层开发
+        分页功能：
+            分页操作需要设定分页对象IPage；
+            IPage对象中封装了分页操作中的所有数据；
+            分页操作是在MyBatisPlu的常规操作基础上增强得到，内部是动态的拼写SQL语句，因此需要增强对应的功能，使用MyBatisPlus拦截器实现；
+        按条件查询功能：
+            使用QueryWrapper对象封装查询条件；
+            推荐使用LambdaQueryWrapper对象；
+            所有查询操作封装成方法调用；
+            查询条件支持动态条件拼装；
+    业务层开发
+        使用MyBatisPlus提供有业务层通用接口(ISerivce<T>)与业务层通用实现类（ServiceImpl<M, T>）
+        在通用化类基础上做功能重载或功能追加；
+        注意重载时不要覆盖原始操作，避免原始功能丢失；
+    表现层开发
+        基于Restful制作表现层接口
+        接收参数
+            实体数据：@RequestBody
+            路径变量：@PathVariable
+        表现层消息一致性处理
+            设计表现层返回结果的模型类，用于后端和前端进行数据格式统一，也称为前后端数据协议；
+（六）打包与运行
+    程序打包与运行（Windows版）
+        SpringBoot工程可以基于Java环境下独立运行jar文件启动服务；
+        SpringBoot工程执行mvn命令package进行打包；
+        执行jar命令：java -jar 工程名.jar
+    Windows端口被占用
+        netstat -ano#查询端口
+        netstat -ano | findstr "端口号"#查询指定端口
+        tasklist | findstr "进程PID号"#根据进程PID查询进程名称
+        taskkill /F /PID "进程PID号"#根据PID杀死任务
+        taskkill -f -t -im "进程名称"#根据京城名称杀死任务
+    程序运行（Linux版）
+（七）配置高级
+    临时属性设置
+        带属性数启动SpringBoot：java -jar springboot.jar --server.port=80
+        携带多个属性启动SpringBoot，属性间使用空格分隔；
+        启动SpringBoot程序时，可以选择是否使用命令行属性为SpringBoot程序传递启动属性；
+    配置文件分类
+        SpringBoot中4级配置文件：
+            1级：file:config/application.yml
+            2级：file:application.yml
+            3级：classpath:config/application.yml
+            4级：classpath:application.yml
+        作用：
+            1级与2级留做系统打包后设置通用属性，1级常用于运维经理进行线上整体项目部署方案调控；
+            3级与4级用于系统开发阶段设置通用属性，3级常用于项目经理进行整体项目属性调控；
+            多层级配置文件间的属性采用叠加覆盖的形式作用于程序；
+    自定义配置文件
+（八）多环境开发
+    多环境开发（YAML版）
+        多环境开发需要设置若干种常用环境，例如开发、生产、测试环境；
+        yaml格式种设置多环节使用---区分环境设置边界；
+        每种环境的区别在于加载的配置属性不同；
+        启用某种环境时需要指定启动时使用该环境；
+    多环境开发（Properties版）
+    多环境开发控制
+        当Maven与SpringBoot同时对多环境进行控制时，以Maven为主，SprignBoot使用@..@占位符读取Maven对应的配置属性值；
+        基于SpringBoot读取Maven配置属性的前提下，如果在Idea下测试工程时pom.xml每次更新需要手动compole方可生效；
+（九）日志
+    日志基础
+        日志用于记录开发调试与运维过程消息；
+        日志的级别共6种，通常使用4种即可，分别是DEBUG、INFO、WARN、ERROR;
+        可以通过日志组或代码包的形式进行日志显示级别的控制；
+        基于lombok提供的@Slf4j注解为类快速添加日志对象；
+    日志输出格式控制
+    日志文件
+（十）热部署
+    手动启动热部署
+        开发者工具：
+            <dependency>
+                <groupId>oeg.springframework.boot</groupId>
+                <artifactId>spring-boot-devtools</artifactId>
+                <optional>true</optional>
+            </dependency>
+        激活热部署：ctrl+F9
+    自动启动热部署
+        热部署仅仅加载当前开发者自定义开发的资源，不加载jar资源；
+    热部署范围配置
+        自定义不参与重启排除项
+            devtools:
+                restart:
+                    exclude:public/**,static/**
+    关闭热部署
+（十一）配置高级
+    @ConfigurationProperties
+    宽松绑定/松散绑定
+    常用计量单位绑定
+    数据校验
+        启用Bean属性校验：
+            导入JSR303与Hibernate校验框架坐标；
+            使用@Validate注解启用校验功能；
+            使用具体校验规则规范数据校验格式；
+（十二）测试
+    加载测试专用属性
+    加载测试专用配置
+    Web环境模拟测试
+        设置测试端口；
+        模拟测试启动；
+        模拟测试匹配；
+    数据层测试回滚
+        为测试用例添加事务，SpringBoot会对测试用例对应的事务提交操作进行回滚
+            @SpringBootTest
+            @Transactional
+            public class DaoTest {
+                @Autowired
+                private BookService bookService;
+            }
+        如果想在测试用例中提交事务，可以通过@Rollback注解设置
+            @SpringBootTest
+            @Transactional
+            @Rollback(false)
+            public class DaoTest {
+            }
+    测试用例数据设定
+        测试用例数据通常采用随机值进行测试，使用SpringBoot提供的随机数为其赋值；
+            testcast:
+                book:
+                    id:${random.int}
+                    id2:${random.int(10)}
+                    type:${random.int(10, 20)}
+                    uuid:${random.uuid}
+                    name:${random.value}
+                    publicshTime:${random.long}
+（十三）数据层解决方案
+    SQL
+        SpringBoot内置3款数据源可供选择；
+        HikariCP（默认）
+        Tomcat提供DataSource
+        Commons DBCP
+    NoSQL
+        SpringBoot整合Redis
+            导入redis对应的starter；
+            配置；
+            提供操作Redis接口对象RedisTemplate；
+                ops*:获取各种数据类型操作接口；
+        SpringBoot整合Mongodb
+            导入Mongodb对应的starter；
+            配置mongodb访问uri；
+            提供操作Mongodb接口对象MongoTemplate；
+（十四）整合第三方技术
+（十五）监控

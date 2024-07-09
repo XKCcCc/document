@@ -1,0 +1,546 @@
+-------------
+---JavaWeb---
+-------------
+
+（一）MySQL
+（二）JDBC
+    JDBC就是用Java操作关系型数据库的一套API；
+    1.本质：
+        官方定义的一套操作所有关系型数据库的规则，即接口；
+        各个数据库厂商去实现这套接口，提供数据库驱动jar包；
+        我们可以使用这套接口编程，真正执行的代码是驱动jar包中的实现类；
+    2.好处：
+        各数据库厂商使用相同的接口，Java代码不需要针对不同数据库分别开发；
+        可随时替换底层数据库，访问数据库的Java代码基本不变；
+    3.步骤：
+        0.创建工程，导入驱动jar包
+        1.注册驱动
+        Class.forName("com.mysql.jdbc.Driver);
+        2.获取连接
+        Connection conn = DriverManager.getConnection(url, username, password);
+        3.定义SQL语句
+        String sql = "update...";
+        4.获取执行SQL对象
+        Statement stmt = conn.createStatement();
+        5.执行SQL
+        stmt.executeUpdate(sql);
+        6.处理返回结果
+        7.释放资源
+    4.DriverManager
+        4.1作用：
+            注册驱动、获取数据库连接；
+            MySQL5之后的驱动包，可以省略注册驱动的步骤；
+        4.2获取连接：
+            static Connection getConnection(String url, String user, String password);
+            url:jdbc:mysql://ip:端口号/数据库名称?参数键值对&参数键值对;
+    5.Connection
+        5.1作用：获取执行SQL的对象、管理事务；
+        5.2获取执行SQL的对象：
+            普通执行SQL对象：Statement createStatement();
+            预编译SQL的执行SQL对象：防止SQL注入：PrepareStatement prepareStatement(sql);
+            执行存储过程的对象：CallableStatement prepareCall(sql);
+        5.3事务管理：
+            MySQL事务管理：
+                开启事务：BEGIN;
+                提交事务：COMMIT;
+                回滚事务：ROLLBACK;
+                MySQL默认自动提交事务
+            JDBC事务管理：
+                开启事务：setCommit(boolean autoCommit);//true为自动提交事务，false为手动提交事务，即开启事务；
+                提交事务：commit();
+                回滚事务：rollback();
+    6.Statement
+        作用：执行SQL语句；
+            int executeUpdate(sql);//执行DML、DDL语句，返回值为受影响行数，执行成功也可能返回0；
+            ResultSet executeQuery(sql);//执行DQL语句，返回值ResultSet结果集对象；
+    7.ResultSet
+        7.1作用：
+            封装DQL查询语句的结果；
+            ResultSet stmt.executeQuery(sql);//执行DQL语句，返回ResultSet对象；
+        7.2获取查询结果：
+            boolean next();//将光标聪当前未知向前移动一行，判断当前行是否为有效行；
+            xxx getXxx(参数);//获取数据，如 int getInt(id);
+        7.3使用步骤：
+            游标向下移动一行并判断该行是否有数据：next();
+            获取数据：getXxx(参数);
+    8.PreparedStatement
+        8.1作用：预编译SQL并执行SQL语句；
+        8.2步骤：
+            获取PreparedStatement对象：PreparedStatement pstmt = conn.prepareStatement(sql);
+            设置参数值：setXxx(参数1, 参数2);
+            执行SQL：executeUpdate();/executeQuery();
+        8.3好处：
+            预编译SQL，性能提高；
+            防止SQL注入，将敏感字符进行转义；
+        8.4开启预编译：
+            useServerPrepStmts=true;
+            配置MySQL执行日志；
+（三）数据库连接池
+    1.简介
+        数据库连接池是个容器，负责分配、管理数据库连接；
+        它允许应用程序重复使用一个现有的数据库连接，而不是再重新建立一个；
+        好处： 
+            资源重用；
+            提升系统响应速度；
+            避免数据库连接遗漏；
+        数据库连接池实现：
+            标准接口：DataSource
+            官方提供的数据库连接池标准接口，有第三方组织实现此接口；
+            功能：获取连接：Connection getConnection();
+    2.Druid数据库连接池
+        Druid连接池是阿里巴巴开源的数据库连接池项目；
+        功能强大，性能优秀，是Java语言最好的数据库连接池之一；
+        使用步骤：  
+            1.导入jar包
+            2.定义配置文件
+            3.加载配置文件
+            4.获取数据库连接池对象
+            5.获取连接
+（四）Maven
+    1.Maven简介
+        Apache Maven是一个项目管理和构建工具，它基于项目对象模型的概念，通过一段描述信息来管理项目的构建、报告和文档；
+        作用：  
+            标准化的项目结构；
+            标准化的构建流程；
+            方便的依赖管理；
+    2.Maven安装配置
+        解压apache-maven-3.6.1.rar即安装完成；
+        配置环境变量MAVEN_HOME为安装路径的bin目录
+        配置本地仓库：修改conf/settings.xml中的<localRepository>为一个指定目录
+        配置阿里云私服：修改conf/settings.xml中的<mirrors>标签，为其添加如下子标签
+            <mirror>
+                <id>alimaven</id>
+                <name>aliyun maven</name>
+                <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+                <mirrorOf>central</mirrorOf>
+            </mirror>
+    3.Maven基本使用
+        Maven常用命令
+            compile：编译
+            clean：清理
+            test：测试
+            package：打包
+            install：安装
+    4.IDEA配置Maven
+        步骤
+            选择IDEA中的File->settings
+            搜索maven
+            设置IDEA使用本地安装的Maven，并修改配置文件路径
+        Maven坐标
+            Maven中的坐标是资源的唯一标识；
+            使用后坐标来定义项目或引入项目中需要的依赖；
+    5.依赖管理
+        步骤
+            在pom.xml中编写<dependencies>标签；
+            在<dependencies>标签中使用<dependency>引入坐标；
+            定义坐标的groupId，artifactId，version；
+            点击刷新按钮，使坐标生效；
+（五）MyBatis
+    MyBatis是一款优秀的持久层框架，用于简化JDBC开发；
+    JavaEE三层架构：表现层、业务层、持久层；
+    持久层是负责将数据到保存到数据库的那一层代码；
+    框架就是一个半成品软件，是一套可重用的、通用的、软件基础代码模型；
+    JDBC缺点：
+        硬编码：注册驱动，获取连接，SQL语句；
+        操作繁琐：手动设置参数，手动封装结果集；
+    1.MyBatis快速入门
+        查询user表中所有数据
+            1.创建user表，添加数据；
+            2.创建模块，导入坐标；
+            3.编写MyBatis核心配置文件，替换连接信息，解决硬编码问题；
+            4.编写SQL映射文件，统一管理SQL语句，解决硬编码问题；
+            5.编码：
+                5.1定义POJO类；
+                2.加载核心配置文件，获取SqlSessionFactory对象；
+                3.获取SqlSession对象，执行sql语句
+                4.释放资源
+    2.Mapper代理开发
+        2.1目的
+            解决原生方式中的硬编码；
+            简化后期执行SQL
+        2.2步骤
+            定义与SQL映射文件同名的Mapper接口，并且将Mapper接口和SQL映射文件放置在同一目录下；
+            设置SQL映射文件的namespace实现为Mapper接口全限定名；
+            在Mapper接口中定义方法，方法名就是SQL映射文件中sql语句的id，并保持参数类型和返回值类型一致；
+            编码：
+                通过SqlSession的getMapper方法获取Mapper接口的代理对象；
+                调用对应方法完成sql的执行；
+    3.MyBatis核心配置文件
+    4.配置文件完成增删改查
+        实体类属性名和数据库列名不一致，不能自动封装数据；
+            起别名：在sql语句中，对不一样的列名起别名，别名和实体类属性名一样；可以定义<sql>片段，提升复用性；
+            resultMap：定义<resultMap>完成不一致的属性名和列名的映射
+        参数占位符
+            #{}：执行SQL时，会将#{}占位符替换为？，将来自动设置参数值；
+            ${}：拼SQL，会存在SQL注入问题；
+            使用时机：
+                参数传递，都使用#{}；
+                如果要对表名、列名进行动态设置，只能使用${}进行sql拼接；
+        parameterType：
+            用于设置参数类型，该参数可以省略；
+        SQL语句中特殊字符处理：
+            转义字符；
+            <![CDATA[内容]]>
+        SQL语句设置多个参数
+            散装参数：需要用@Param("SQL中的参数占位符名称")
+            实体类封装参数：只需要保证SQL的参数名和实体类名对应上，即可设置成功；
+            map集合：只需要保证SQL中的参数名和map集合的键的名称对应上，即可设置成功；
+        动态SQL 
+            if：用于判断参数是否有值，使用test属性进行条件判断；
+                使用<where>标签替换where关键字；
+        返回添加数据的主键：<insert useGeneratedKeys="true" keyProperty="id">
+    5.注解完成增删改查
+        注解完成简单功能，配置文件完成复杂功能；
+        查询：@Select
+        添加：@Insert
+        修改：@Update
+        删除：@Delete
+    6.动态SQL
+（六）HTML、CSS、JS
+（七）Web核心
+    1.B/S架构：Browser/Server,浏览器/服务器架构模式，它的特点十，客户端只需要浏览器，应用程序的逻辑和数据都存储在服务器端，浏览器只需要请求服务器，获取Web资源，服务器把Web资源发送给浏览器即可；
+    2.静态资源：HTML、CSS、JavaScript、图片等，负责页面展现；
+    3.动态资源：Servlet、JSP等，负责逻辑处理；
+    4.数据库：负责存储数据；
+    5.HTP协议：定义通信规则；
+    6.Web服务器：负责解析HTTP协议，解析请求数据，并发送响应数据；
+（八）HTTP
+    1.概念：HTTP，超文本传输协议，规定了浏览器和服务器之间数据传输的规则；
+    2.特点：
+        基于TCP协议：面向连接，安全；
+        基于请求-响应模型的：一次请求对应一次响应；
+        HTTP协议十无状态的协议，对于事务处理没有记忆能力，每次请求-响应都是独立的；
+            缺点：多次请求键不能共享数据。Java中使用会话技术来解决这个问题；
+            优点：速度快；
+    3.HTTP-请求数据格式：
+        请求行：请求数据的第一行。其中GET标识请求方式，/标识请求资源路径，HTTP/1.1表示协议版本；
+        请求头：第二行开始，格式为key:value形式；
+        请求体：POST请求的最后一部分，存放请求参数；
+        常见的HTTP请求头：
+            Host:标识请求的主机名；
+            User-Agent:浏览器版本，例如Chrome浏览器的标识类似Mozilla/5.0；
+            Chrome/79:IE浏览器的标识类似Mozilla/5.0；
+            Accept:表示浏览器能接收的资源类型，如text/*、image/*、或者*/*表示所有；
+            Accept-Language:表示浏览器偏好的语言，服务器可以据此返回不同语言的网页；
+            Accpet-Encoding:表示浏览器可以支持的压缩类型，例如zip、deflate等；
+        GET和POST请求的区别：
+            GET请求参数在请求行中，没有请求体，POST请求请求参数在请求体中；
+            GET请求参数大小有限制，POST没有；
+    4.HTTP-响应数据格式
+        响应行：响应数据的第一行。其中HTTP/1.1表示协议版本，200表示响应状态码，OK表示状态码描述；
+        响应头：第二行开始，格式为key：value形式；
+        响应体：最后一部分，存放响应数据；
+        常见的HYYP响应头：
+            Content-Type:表示该幸运内容的类型，例如text/html,image/jpeg；
+            Content-Length:表示该响应内容的长度（字节数）；
+            COntent-Encoding:表示该响应压缩算法，例如gzip；
+            Cache-Control:只是客户端硬如何缓存，例如max-age=300表示可以最大缓存300秒
+    5.状态吗分类：
+        1xx：响应中
+        2xx：成功
+        3xx：重定向
+        4xx：客户端错误
+        5xx：服务器端错误
+（九）Tomcat
+    概念：开源免费的轻量级Web服务器，支持Servlet/JSP少了JavaEE规范。
+    Java EE：Java Enterprise Edition，Java企业版，指Java企业级开发的技术规范总和，包含13项技术规范：JDBC、JNDI、EJB、RMI、JSP、Servlet、XML、JMS、Java IDL、JTS、JTA、JavaMail、JAF‘
+    Tomcat也被称为Web容器、Servlet容器，Servlet需要依赖于Tomcat才能运行；
+    1.Web服务器的作用：
+        封装HTTP协议操作，简化开发；
+        可以将一个Web项目部署到服务器中，对外提供网上浏览服务；
+    2.Tomcat基本使用：
+        修改启动端口号：conf/server.xml;
+    3.Tomcat部署项目：
+        将项目防止到webapps目录下，即部署完成；
+        一般JavaWeb项目会被打包成war包，然后将war包放到webapps目录下，Tomcat会自动解压缩war文件；
+（十）Servlet
+    Servlet是Java提供的一门动态Web资源开发技术；
+    Servlet是JavaEE规范之一，其实就是一个接口，需要定义Servlet类实现Servlet接口，并由web服务器运行Servlet；
+    1.快速入门
+        创建Web项目，导入Servlet依赖坐标
+        创建：定义一个类，实现Servlet接口，并重写接口中的所有方法，并在service方法中输入一句话；
+        配置：在类上使用@WebServlet注解，配置该Servlet的访问路径；
+        访问：启动Tomcat，浏览器输入URL访问该Servlet；
+    2.Servlet生命周期
+        加载和实例化； 
+        初始化；
+        请求处理；
+        服务终止；
+    3.Servlet体系结构
+        void init(ServletConfig config);//初始化方法，在Servlet被创建时执行，只执行一次
+        void service(ServletRequest req, ServletResponse res);//提供服务方法，每次Servlet被访问，都会调用该方法
+        void destroy();//销毁方法，待Servlet被销毁时，调用该方法，在内存释放或服务器关闭时销毁servlet
+        ServletConfig getServletConfig();//获取ServletConfig对象
+        String getServletInfo();//获取Servlet信息
+        HttpServlet使用步骤
+            继承HttpServlet
+            重写doGet和doPost方法
+        HttpServlet原理
+            获取请求方式，并根据不同的请求方式，调用不同的doXxx方法
+    4.Servlet urlPattern配置
+        urlPattern配置规则：
+            精确匹配：@WebServlet("/user/select")
+            目录匹配：@WebServlet("/user/*")
+            扩展名匹配：@WebServlet("*.do")
+            任意匹配：@WebServlet("/") @WebServlet("/*")
+                /和/*的区别：当配置/，会覆盖掉tomcat中的DefaultServlet，当其他url-pattern都匹配不上时都会访问这个Servlet；当配置了/*，意味着匹配任意访问路径；
+    5.XML配置方式编写Servlet
+        步骤：
+            编写Servlet类；
+            在web.xml中配置该Servlet；
+（十一）Request&Response
+    1.Request获取请求数据
+        String getMethod();//获取请求方式
+        String getContextPath();//获取虚拟目录
+        StringBuffer getRequestURL() ;//获取URL
+        String getRequestURI();//获取URI
+        String getQueryString();//获取请求参数
+        String getHeader(String name);//根据请求头名称，获取值
+        ServletInputStream getInputStream();//获取字节输入流
+        BufferedReader getReader();//获取字符输入流
+            Request通用方式获取请求参数
+                Map<String, String[]> getParameterMap();//获取所有参数Map集合
+                String[] getParameterValues(String name);//根据名称获取参数值（数组）
+                String getParameter(String name);//根据名称获取参数值（单个值）
+            请求参数中文乱码处理
+                通用方式：new String(username.getBytes("ISO-8859-1"), "UTF-8");
+                URL编码实现方式：
+                    编码：URLEncoder.encode(str, "utf-8");
+                    解码：URLDecoder.decode(s, "ISO-8859-1");
+    2.Request请求转发
+        一种在服务器内部的资源跳转方式；
+        实现方式：req.getRequestDispatcher("资源B路径").foward(req, resp);
+        请求转发资源间共享数据：使用Request对象
+            void serAttribute(String name, Object 0);//存储数据到request域中
+            Object getAttribute(String name);//根据key，获取值
+            boid removeAttribute(String name);//根据key，删除该键值对
+        请求转发特点：
+            浏览器地址栏路径不发生变化；
+            只能转发到当前服务器的内部资源；
+            一次请求，可以在转发的资源间使用request共享数据；
+    3.Response设置相应数据功能介绍
+        void setStatus(int sc);//设置响应状态码
+        void setHeader(String name, String value);//设置响应头键值对
+        PrintWriter getWriter();//获取字符输出流
+        ServletOutputStream();//获取字节输出流
+    4.Response重定向
+        一种资源跳转方式；
+        实现方式：
+            resp.setStatus(302);
+            resp.setHeader("location", "资源B的路径");
+            resp.sendRedirect("资源B的路径");
+        重定向的特点：
+            浏览器地址栏路径发生变化；
+            可以重定向到任意位置的资源；
+            两次请求，不能再多个资源使用request共享数据；
+    5.Response响应字符数据
+        PrintWriter writer = resp.getWriter();//通过Response对象获取字符输出流
+        writer.write("aaa");//写数据
+        resp.setContentType("text/html;charset=utf-8");//解决中文数据乱码
+（十二）JSP
+    Java Server Pages，Java服务端页面；
+    一种动态的网页技术，其中既可以定义HTML、JS、CSS等静态内容，还可以定义Java代码的动态内容；
+    作用：简化开发，避免了再Servlet中直接输出HTML标签；
+    缺点：书写麻烦；阅读麻烦；复杂度高；占内存和磁盘；调试困难；不利于团队协作；
+    1.JSP快速入门
+        导入JSP坐标
+        创建JSP文件
+        编写HTML标签和Java代码
+    2.JSP原理
+        JSP本质上时一个Servlet
+        JSP在被访问时，由JSP容器（Tomcat）将其转换为Java文件（Servlet），再由JSP容器将其编译，最终对外提供服务的其实就是这个字节码文件；
+    3.JSP脚本
+        JSP脚本用于再JSP页面内定义Java代码；
+        JSP脚本分类：
+            <% ... %>:内容会直接放到jspService()方法之中
+            <%= 。。。 %>:内容会放到out.print()中，作为out.print()的参数
+            <%! ... %>:内容会放到jspService()方法外，被类直接包含；
+    4.EL表达式
+        EL表达式用于简化JSP页面内的Java代码；
+        主要功能：获取数据；
+        语法：${expression} 获取域中存储的key为brands的数据
+        JavaWeb中的四大域对象：
+            page：当前页面有效；
+            request：当前请求有效；
+            session：当前会话有效；
+            application：当前应用有效；
+    5.JSTL标签
+        JSTL标签使用标签取代JSP页面上的Java代码；
+        快速入门：
+            导入坐标；
+            再JSP页面上引入JSTL标签库；
+            使用<c:if>
+        <C:forEach>:相当于for循环
+            items:被遍历的容器；
+            var:遍历产生的临时变量；
+    6.MVC模式和三层架构
+        MVC是一种分层开发的模式，其中：
+            M：Model，业务模型，处理业务；
+            V：View，视图，界面展示；
+            C：Controller，控制器，处理请求，调用模型和视图；
+        MVC好处：
+            职责单一，互不影响；
+            有利于分工协作；
+            有利于组件重用；
+        三层架构：
+            数据访问层：(mapper)对数据库的CRUD基本操作；（MyBatis）
+            业务逻辑层：(service)对业务逻辑进行封装，组合数据访问层层中基本功能，形成复杂的业务逻辑功能；（SpringMVC）
+            表现层：(web/controller)接收请求，封装数据，调用业务逻辑层，响应数据；（Spring）
+（十三）会话跟踪技术
+    会话：用户打开浏览器，访问web服务器的资源，会话建立，直到有一方断开连接，会话结束。在一次会话中可以包含多次请求和响应；
+    会话跟踪：一种维护浏览器状态的方法，服务器需要识别多次请求是否来自同一浏览器，以便在同一次会话的多次请求间共享数据；
+    HTTP协议是无状态的，每次浏览器项服务器请求时，服务器都会将该请求视为新的请求，因此我们需要会话跟踪技术来实现会话内数据共享；
+    实现方式：  
+        客户端会话跟踪技术：Cookie
+        服务端会话跟踪技术：Session
+    1.Cookie：
+        1.1基本使用：
+            Cookie客户端会话技术，将数据保存到客户端，以后每次请求都携带Cookie数据进行访问；
+            1.创建Cookie对象，设置数据
+                Cookie cookie = new Cookie("key", "value");
+            2.发送Cookie到客户端，使用response对象
+                response.addCookie(cookie);
+            3.获取客户端携带的所有Cookie，使用request对象
+                Cookie[] cookies = request.getCookies();
+            4.遍历数组，获取每一个Cookie对象，使用request对象
+            5.使用Cookie对象方法获取数据
+                cookie.getName();
+                cookie.getValue();
+        1.2原理：
+            Cookie的实现是基于HTTP协议的；
+            响应头：set-cookie
+            请求头：cookie
+        1.3使用细节：
+            Cookie存活时间：
+                默认情况下，Cookie存储在浏览器内存中，当浏览器关闭，内存释放，则Cookie被销毁；
+                setMaxAge(int seconds)：设置Cookie存活时间；
+                    正数：将Cookie写入浏览器所在的电脑的硬盘，持久化存储，到时间自动删除；
+                    负数：默认值，Cookie在当前浏览器内存中，当浏览器关闭，则Cookie被销毁；
+                    零：删除对应Cookie；
+            Cookie存储中文：
+                Cookie不能直接存储中文；
+                如果要存储，则需要进行转码：URL编码；
+    2.Session：
+        2.1基本使用：
+            服务端会话跟踪技术：将数据保存到服务端；
+            JavaEE提供HttpSession接口，来实现一次会话的多次会话的多次请求间数据共享功能；
+            1.获取Session对象
+                HttpSession session = request.getSession();
+            2.Session对象功能：
+                void setAttribute(String name, Object 0);//存储数据到session域中
+                Object getAttribute(String name);//根据key，获取值
+                void removeAttribute(String name);//根据key，删除该键值对
+        2.2原理：
+            Session是基于Cookie实现的；
+        2.3使用细节：
+            Session钝化、活化：
+                钝化：在服务器正常关闭后，Tomcat会自动将Session数据写入硬盘的文件中；
+                活化：在此启动服务器后，从文件中加载数据到Session中；
+            Session销毁：
+                默认情况下，无操作，30分钟自动销毁；
+                调用Session对象的invalidate()方法
+        Session和Cookie都是来完成一次会话内多次请求间数据共享的；
+        2.4Session和Cookie的区别：
+            存储位置：Cookie是将数据存储在客户端，Session将数据存储在服务端；
+            安全性：Cookie不安全，Session安全；
+            数据大小：Cookie最大3kb，Session无大小限制；
+            存储时间：Cookie可以长期存储，Session默认30分钟；
+            服务器性能：Cookie不占服务器资源，Session占用服务器资源；
+（十四）Filter
+    概念：Filter表示过滤器，是JavaWeb三大组件（Servlet、Filter、Listener）之一；
+    过滤器可以把对资源的请求拦截下来，从而实现一些特殊的功能；
+    过滤器一般完成一些同一的操作，比如：权限控制、统一编码处理、敏感字符处理等等；
+    1.Filter快速入门
+        1.定义类，实现Filter接口，并重写所有方法；
+        2.配置Filter拦截资源的路径，在类上定义@WebFilter注解；
+        3.在doFilter方法中输出一句化，并放行；      
+   2. Filter执行流程
+    3.Filter使用细节
+        3.1Filter拦截路径配置:
+            拦截具体的资源：/index.jsp
+            目录拦截：/user/*
+            后缀名拦截：*.jsp
+            拦截所有：/*
+        3.2过滤器链:
+            一个Web应用，可以配置多个过滤器，这多个过滤器称为过滤器链；
+            注解配置的Filter，优先级按照过滤器类名的自然排序；
+（十五）Listener
+    概念：Listener表示监听器，是JavaWeb三大组件（Servlet、Filter、Listener）之一；
+    监听器可以箭头就是在applicationsession，request三个对象创建、销毁或者往其中添加修改删除属性是自动执行代码的功能组件；
+    1.Listener分类：JavaWeb中提供了8个监听器：
+        ServletContext监听：
+            ServletContextListener 用于对ServletContext对象进行监听（创建、销毁）
+            ServletContextAttributeListener 对ServletContext对象中属性的监听（增删改属性）
+        Session监听：
+            HttpSessionListener 对Session对象的整体状态的监听（创建、销毁）
+            HttpSessionAttributeListener 对Session对象中的属性监听（增删改属性）
+            HttpSessionBindingListener 监听对象于Session的绑定和解除
+            HttpSessionActivationListener 对Session数据的钝化和活化的监听
+        Request监听：
+            ServletRequestListener 对Request对象进行监听（创建、销毁）
+            ServletRequestAttributeListener 对Request对象中属性的监听（增删改属性）
+    2.ServletContextListener使用：
+        1.定义类，实现ServletContextLinstener接口
+        2.在类上添加@WebListener注解
+（十六）AJAX
+    概念：AJAX（Asynchronous JavaScript And XML）异步的JavaScript和XML；
+    1.AJAX的作用：
+        1.与服务器进行数据交换：通过AJAX可以给服务器发送请求，并获取服务器响应的数据；
+            使用过了AJAX和服务器进行通信，就可以使用HTML+AJAX来替换JSP页面
+        2.异步交互：可以在不重新加载整个页面的情况下，与服务器交换数据并更新部分网页的技术；
+    2.AJAX快速入门
+        1.编写AjaxServlet，并舒勇response输出字符串；
+        2.创建XMLHttpRequest对象，用于和服务器交换数据；
+        3.先服务器发送请求；
+        4.获取服务器响应数据；
+    3.Axios异步框架
+        Axios对原生的AJAX进行封装，简化书写；
+        Axios快速入门
+            1.引入axios的js文件；
+            2.使用axios发送请求，并获取响应结果；
+    4.JSON
+        JSON基础语法
+        JSON数据和Java对象转换
+            请求数据：JSON字符串转为Java对象；
+            响应数据：Java对象转为JSON字符串；
+            Fastjson是阿里巴巴提供的一个Java语言编写的高性能功能完善的JSON库，是目前Java语言中最快的JSON库，可以实现Java对象和JSON字符串的相互转换；
+            使用：
+                1.导入坐标；
+                2.Java对象转JSON：String jsonStr = JSON.toJSONString(obj);
+                3.JSON字符串转Java对象：User user = JSON.paseObject(jsonStr, User.class);
+（十七）Vue
+    Vue是一套前端框架，免除原生JavaScript中的DOM操作，简化书写；
+    Vue基于MVVM思想，实现数据的双向绑定，将编程的关注点放在数据上；
+    1.Vue快速入门
+        1.新建HTML页面，引入Vue.js文件；
+        2.在JS代码区域，创建Vue核心对象，进行数据绑定；
+        3.编写视图；
+    2.Vue常用指令
+        v-bind:为HTML标签绑定属性值，如设置href，css等；
+        v-model:在表单元素上创建双向数据绑定；
+        v-on:为HTML标签绑定事件；
+        v-if,v-else,v-else-if:条件性的渲染某元素，判定未true是渲染，否则不渲染；
+        v-show:根据条件展示某元素，区别在于切换的是display属性的值；
+        v-for:列表渲染，遍历容器的元素或者对象属性；
+    3.Vue生命周期
+        生命周期的八个阶段：每触发一个生命周期事件，会自动执行一个生命周期方法；
+        beforeCreate:创建前
+        created:创建后
+        beforeMount:载入前
+        mounted:挂载完成，Vue初始化成功，HTML页面渲染成功，可在此发送异步请求，加载数据；
+        beforeUpdate:更新前
+        updated:更新后
+        beforeDestroy:销毁前
+        destroyed:销毁后
+（十八）Element
+    Element：是饿了么公司前端开发团队提供的一套基于Vue的网站组件库，用于快速构建网页；
+    组件：组成网页的部件，例如超链接、按钮、图片、表格等；
+    1.Element快速入门
+        1.引入Element的css、js文件和Vue.js
+        2.创建Vue核心对象；
+        3.官网复制Element组件代码；
+    2.Element布局
+        Element中有两种布局方式：
+            Layout布局：通过基础的24分栏，迅速简便地创建布局；
+            Container布局容器：用于布局的容器组件，方便快速搭建页面的基本结构；
+    3.Element组件
