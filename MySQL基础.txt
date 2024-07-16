@@ -105,7 +105,7 @@
         2.向下取整 select floor（1.9）;
         3.取模 select mod(7, 4)；
         4.取随机值 select rand();
-        5.四舍五入 select rount(2.345, 2);
+        5.四舍五入 select round(2.345, 2);
         6.例子 select lpad(round(rand()*1000000, 0), 6, "0");
     （三）日期函数
         1.当前日期 select curdate();
