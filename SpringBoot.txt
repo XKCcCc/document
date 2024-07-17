@@ -94,7 +94,7 @@
         分页功能：
             分页操作需要设定分页对象IPage；
             IPage对象中封装了分页操作中的所有数据；
-            分页操作是在MyBatisPlu的常规操作基础上增强得到，内部是动态的拼写SQL语句，因此需要增强对应的功能，使用MyBatisPlus拦截器实现；
+            分页操作是在MyBatisPlus的常规操作基础上增强得到，内部是动态的拼写SQL语句，因此需要增强对应的功能，使用MyBatisPlus拦截器实现；
         按条件查询功能：
             使用QueryWrapper对象封装查询条件；
             推荐使用LambdaQueryWrapper对象；
@@ -231,4 +231,71 @@
             配置mongodb访问uri；
             提供操作Mongodb接口对象MongoTemplate；
 （十四）整合第三方技术
+    缓存
+        缓存时一种介于数据永久存储介质和数据应用之间的数据临时存储介质；
+        使用缓存可以有效的减少低俗数据读取过程的次数（例如磁盘IO），提高系统性能；
+        缓存不仅可以用于提高永久性存储介质的数据读取效率，还可以提供临时的数据存储空间；
+        SpringBoot启用缓存的方式
+            @EnableCaching
+            @Cacheable
+        缓存技术
+            spring-cache
+                simple
+                ehcache
+                redis
+                memcached
+            jetcache
+            j2cache
+    任务
+    邮件
+    消息
+        AcriveMQ
+        RabbitMQ
+        RocketMQ
+        Kafka
 （十五）监控
+    监控的意义
+        监控服务状态是否宕机
+        监控服务运行指标（内存、虚拟机、线程、请求等）
+        监控日志
+        管理服务（服务下线）
+    可视化监控平台
+    监控原理
+    自定义监控指标
+（十六）自动配置
+    bean加载方式
+        xml+,bean/>
+        xml:context+注解（@Component+4个@Bean）
+        配置类+扫描+注解（@Component+4个@Bean）
+            @Bean定义FactoryBean接口
+            @ImportResource
+            @Configuration注解的proxyBeanMethods属性
+        @Import导入bean的类
+            @Import导入配置类
+        AnnotationConfigApplicationContext调用Register方法
+        @Import导入ImportSelector接口
+        @Import导入ImportBeanDefinitionRegistrar接口
+        @Import导入BeanDefinitionRegistryPostProcessor接口
+    bean加载控制
+    bean依赖属性配置
+    自动配置原理
+        收集Spring开发者的编程习惯，整理开发过程使用的常用技术列表->技术集A
+        收集常用技术（技术集A）的使用参数，整理开发过程中每个技术的常用设置列表->技术集B
+        初始化SpringBoot基础环境，加载用户自定义的bean和导入的其他坐标，形成初始化环境；
+        将技术集A包含的所有技术都定义出来，在Spring/SpirngBoot启动时默认全部加载；
+        将技术集A中具有使用条件的技术约定出来，设置成按条件加载，有开发者决定是否使用该技术（与初始化环境比对）
+        将设置集B作为默认配置加载（约定大于配置），减少开发者配置工作量；
+        开放设置集B的配置覆盖接口，有开发者根据自身需要决定是否覆盖默认配置；
+    变更自动配置
+（十七）自定义starter
+（十八）核心原理
+    SpringBoot启动流程
+        初始化各种属性，加载成对象
+            读取环境属性
+            系统配置
+            参数
+        创建Spring容器对象ApplicationContet，加载各种配置；
+        在容器创建前，通过监听器机制，应对不同阶段加载数据、更新数据的需求；
+        容器初始化过程中各种功能，例如统计书简、输出日志等；
+    容器类型选择
+    监听器
